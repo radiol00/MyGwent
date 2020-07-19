@@ -1,68 +1,73 @@
-import 'package:card_api_test/bloc/deck/deck_bloc.dart';
-import 'package:card_api_test/bloc/deck/deck_event.dart';
-import 'package:card_api_test/model/deck.dart';
+import 'package:card_api_test/bloc/deck_bloc.dart';
+import 'package:card_api_test/repository/deck_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({Key key}) : super(key: key);
+
   @override
   _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  final _bloc = DeckBloc();
+  DeckBloc _bloc;
 
   @override
   void initState() {
-    _bloc.deckEventSink.add(GettingDeckEvent());
+    _bloc = DeckBloc(DeckRepository());
+    _bloc.add(GetNewDeck(1));
     super.initState();
   }
 
   @override
   void dispose() {
-    _bloc.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(
+      title: 'Elo',
+      home: BlocProvider(
+        create: (context) => _bloc,
+        child: Scaffold(
           appBar: AppBar(),
-          body: StreamBuilder(
-            stream: _bloc.deck,
-            initialData: null,
-            builder: (BuildContext context, AsyncSnapshot<Deck> snapshot) {
-              if (snapshot.hasError) {
-                return Container(
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text('Wystąpił błąd z połączeniem'),
-                        Text(snapshot.error.toString()),
-                        RaisedButton(
-                            child: Text('Ponów'),
-                            onPressed: () {
-                              _bloc.deckEventSink.add(GettingDeckEvent());
-                            })
-                      ],
-                    ),
-                  ),
+          body: BlocBuilder<DeckBloc, DeckState>(
+            builder: (context, state) {
+              if (state is InitialDeckState) {
+                return Text('initial state');
+              } else if (state is LoadingDeckState) {
+                return Column(
+                  children: <Widget>[
+                    CircularProgressIndicator(),
+                    Text('Loading state')
+                  ],
                 );
-              } else if (snapshot.hasData) {
-                return Container(
-                  child: Text('${snapshot.data.id}'),
+              } else if (state is LoadedDeckState) {
+                return Text(state.deck.id);
+              } else if (state is ErrorDeckState) {
+                return Column(
+                  children: <Widget>[
+                    Text(state.message),
+                    RaisedButton(
+                      child: Text('Ponów'),
+                      onPressed: () {
+                        _bloc.add(GetNewDeck(1));
+                      },
+                    )
+                  ],
                 );
-              } else {
-                return CircularProgressIndicator();
               }
+              return Text('error');
             },
           ),
-        ));
+        ),
+      ),
+    );
   }
 }

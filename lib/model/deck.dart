@@ -8,13 +8,6 @@ class Deck {
     cards = [];
   }
 
-  Deck.empty() {
-    id = "";
-    shuffled = false;
-    remaining = 0;
-    cards = [];
-  }
-
   factory Deck.fromJson(Map<String, dynamic> json) {
     return Deck(
         id: json['deck_id'],
