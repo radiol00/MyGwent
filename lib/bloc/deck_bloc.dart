@@ -17,8 +17,8 @@ class DeckBloc extends Bloc<DeckEvent, DeckState> {
   Stream<DeckState> mapEventToState(
     DeckEvent event,
   ) async* {
-    yield LoadingDeckState();
     if (event is GetNewDeck) {
+      yield LoadingDeckState();
       try {
         final deck = await repository.fetchDeck(event.amount);
         yield LoadedDeckState(deck);

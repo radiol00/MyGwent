@@ -3,6 +3,7 @@ import 'package:card_api_test/repository/deck_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:card_api_test/view/game_board.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 void main() {
   runApp(MyApp());
@@ -36,6 +37,7 @@ class _MyAppState extends State<MyApp> {
       home: BlocProvider(
         create: (context) => _bloc,
         child: Scaffold(
+          backgroundColor: Colors.green[200],
           body: SafeArea(
             child: BlocListener<DeckBloc, DeckState>(
               listener: (context, state) {
@@ -47,15 +49,15 @@ class _MyAppState extends State<MyApp> {
               child: BlocBuilder<DeckBloc, DeckState>(
                 builder: (context, state) {
                   if (state is InitialDeckState) {
-                    return Center(
-                      child: Text('...'),
-                    );
+                    return Container();
                   } else if (state is LoadingDeckState) {
                     return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          CircularProgressIndicator(),
+                          SpinKitRotatingPlain(
+                            color: Color.fromRGBO(255, 215, 0, 1),
+                          )
                         ],
                       ),
                     );
@@ -79,7 +81,7 @@ class _MyAppState extends State<MyApp> {
                       ),
                     );
                   }
-                  return Text('error');
+                  return Text('Error');
                 },
               ),
             ),
