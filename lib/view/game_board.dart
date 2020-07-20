@@ -20,7 +20,7 @@ class _GameBoardState extends State<GameBoard> {
 
   void getStartingHand() async {
     try {
-      Hand draw = await widget.deck.drawCards(5);
+      Hand draw = await widget.deck.drawCards(6);
       playerHand.cardList.addAll(draw.cardList);
       streamController.add(playerHand);
     } catch (e) {
@@ -92,12 +92,23 @@ class _GameBoardState extends State<GameBoard> {
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
                     return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: snapshot.data.cardList
-                          .map((e) => Card(
+                          .map((e) => Draggable(
+                              childWhenDragging: SizedBox(width: 63),
+                              feedback: SizedBox(
+                                height: 100,
+                                child: Card(
+                                  child: FadeInImage.assetNetwork(
+                                      placeholder: 'assets/cardback.png',
+                                      image: e['image']),
+                                ),
+                              ),
+                              child: Card(
                                 child: FadeInImage.assetNetwork(
                                     placeholder: 'assets/cardback.png',
                                     image: e['image']),
-                              ))
+                              )))
                           .toList(),
                     );
                   } else if (snapshot.hasError) {
