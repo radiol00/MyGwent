@@ -2,6 +2,7 @@ import 'package:card_api_test/bloc/deck_bloc.dart';
 import 'package:card_api_test/repository/deck_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:card_api_test/view/game_board.dart';
 
 void main() {
   runApp(MyApp());
@@ -32,39 +33,56 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Elo',
       home: BlocProvider(
         create: (context) => _bloc,
         child: Scaffold(
-          appBar: AppBar(),
-          body: BlocBuilder<DeckBloc, DeckState>(
-            builder: (context, state) {
-              if (state is InitialDeckState) {
-                return Text('initial state');
-              } else if (state is LoadingDeckState) {
-                return Column(
-                  children: <Widget>[
-                    CircularProgressIndicator(),
-                    Text('Loading state')
-                  ],
-                );
-              } else if (state is LoadedDeckState) {
-                return Text(state.deck.id);
-              } else if (state is ErrorDeckState) {
-                return Column(
-                  children: <Widget>[
-                    Text(state.message),
-                    RaisedButton(
-                      child: Text('Ponów'),
-                      onPressed: () {
-                        _bloc.add(GetNewDeck(1));
-                      },
-                    )
-                  ],
-                );
-              }
-              return Text('error');
-            },
+          body: SafeArea(
+            child: BlocListener<DeckBloc, DeckState>(
+              listener: (context, state) {
+                if (state is ErrorDeckState) {
+                  Scaffold.of(context)
+                      .showSnackBar(SnackBar(content: Text(state.message)));
+                }
+              },
+              child: BlocBuilder<DeckBloc, DeckState>(
+                builder: (context, state) {
+                  if (state is InitialDeckState) {
+                    return Center(
+                      child: Text('...'),
+                    );
+                  } else if (state is LoadingDeckState) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          CircularProgressIndicator(),
+                        ],
+                      ),
+                    );
+                  } else if (state is LoadedDeckState) {
+                    return GameBoard(
+                      deck: state.deck,
+                    );
+                  } else if (state is ErrorDeckState) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(state.message),
+                          RaisedButton(
+                            child: Text('Ponów'),
+                            onPressed: () {
+                              _bloc.add(GetNewDeck(1));
+                            },
+                          )
+                        ],
+                      ),
+                    );
+                  }
+                  return Text('error');
+                },
+              ),
+            ),
           ),
         ),
       ),
