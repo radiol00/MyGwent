@@ -71,7 +71,35 @@ class _GameBoardState extends State<GameBoard> {
             height: 80.0,
             color: Colors.green[600],
             child: Row(
-              children: <Widget>[Text('Twoi Miecznicy')],
+              children: <Widget>[
+                Expanded(
+                  child: DragTarget(
+                    onWillAccept: (data) {
+                      print(data);
+                      if (data == '2D') {
+                        return false;
+                      }
+                      return true;
+                    },
+                    onAccept: (data) {
+                      print('accepted $data');
+                    },
+                    onLeave: (data) {
+                      print('rejected $data');
+                    },
+                    builder: (context, candidateData, rejectedData) {
+                      return Center(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            (Text('Twoi miecznicy')),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                )
+              ],
             ),
           ),
           Container(
@@ -95,6 +123,7 @@ class _GameBoardState extends State<GameBoard> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: snapshot.data.cardList
                           .map((e) => Draggable(
+                              data: e['code'],
                               childWhenDragging: SizedBox(width: 63),
                               feedback: SizedBox(
                                 height: 100,
