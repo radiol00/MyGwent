@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:card_api_test/bloc/deck_bloc.dart';
+import 'package:card_api_test/bloc/units_bloc.dart';
 import 'package:card_api_test/model/deck.dart';
 import 'package:card_api_test/model/hand.dart';
+import 'package:card_api_test/model/units.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -16,6 +18,7 @@ class GameBoard extends StatefulWidget {
 
 class _GameBoardState extends State<GameBoard> {
   StreamController<Hand> streamController;
+  UnitsBloc _unitsBloc;
   Hand playerHand;
 
   void getStartingHand() async {
@@ -30,6 +33,7 @@ class _GameBoardState extends State<GameBoard> {
 
   @override
   void initState() {
+    _unitsBloc = UnitsBloc();
     playerHand = Hand([]);
     streamController = StreamController<Hand>();
     getStartingHand();
@@ -38,122 +42,127 @@ class _GameBoardState extends State<GameBoard> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            height: 100.0,
-            color: Colors.green[400],
-            child: Row(
-              children: <Widget>[Text('Ręka przeciwnika')],
+    return BlocProvider(
+      create: (context) => _unitsBloc,
+      child: Container(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              height: 100.0,
+              color: Colors.green[400],
+              child: Row(
+                children: <Widget>[Text('Ręka przeciwnika')],
+              ),
             ),
-          ),
-          Container(
-            height: 80.0,
-            color: Colors.green[600],
-            child: Row(
-              children: <Widget>[Text('Łucznicy przeciwnika')],
+            Container(
+              height: 80.0,
+              color: Colors.green[600],
+              child: Row(
+                children: <Widget>[Text('Łucznicy przeciwnika')],
+              ),
             ),
-          ),
-          Container(
-            height: 80.0,
-            color: Colors.green[600],
-            child: Row(
-              children: <Widget>[Text('Miecznicy przeciwnika')],
+            Container(
+              height: 80.0,
+              color: Colors.green[600],
+              child: Row(
+                children: <Widget>[Text('Miecznicy przeciwnika')],
+              ),
             ),
-          ),
-          Divider(
-            thickness: 2.0,
-            color: Colors.green,
-          ),
-          Container(
-            height: 80.0,
-            color: Colors.green[600],
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: DragTarget(
-                    onWillAccept: (data) {
-                      print(data);
-                      if (data == '2D') {
-                        return false;
-                      }
-                      return true;
-                    },
-                    onAccept: (data) {
-                      print('accepted $data');
-                    },
-                    onLeave: (data) {
-                      print('rejected $data');
-                    },
-                    builder: (context, candidateData, rejectedData) {
-                      return Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            (Text('Twoi miecznicy')),
-                          ],
+            Divider(
+              thickness: 2.0,
+              color: Colors.green,
+            ),
+            Container(
+              height: 80.0,
+              color: Colors.green[600],
+              child: Row(
+                children: <Widget>[
+                  BlocBuilder<UnitsBloc, UnitsState>(
+                    builder: (context, state) {
+                      return Expanded(
+                        child: DragTarget(
+                          onAccept: (data) {
+                            _unitsBloc.add(UnitsAdd({'code': data}));
+                          },
+                          builder: (context, candidateData, rejectedData) {
+                            return Center(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ...(state is UnitsInitial
+                                      ? []
+                                      : state is UnitsPlayed
+                                          ? [
+                                              ...(state.units.warriors.map(
+                                                  (element) => Text(
+                                                      '${element['code']}')))
+                                            ]
+                                          : [Text('ERROR DISPLAYING ROW')])
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       );
                     },
-                  ),
-                )
-              ],
+                  )
+                ],
+              ),
             ),
-          ),
-          Container(
-            height: 80.0,
-            color: Colors.green[600],
-            child: Row(
-              children: <Widget>[Text('Twoi łucznicy')],
+            Container(
+              height: 80.0,
+              color: Colors.green[600],
+              child: Row(
+                children: <Widget>[Text('Twoi łucznicy')],
+              ),
             ),
-          ),
-          Container(
-            height: 100.0,
-            color: Colors.green[400],
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: StreamBuilder<Hand>(
-                stream: streamController.stream,
-                initialData: null,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: snapshot.data.cardList
-                          .map((e) => Draggable(
-                              data: e['code'],
-                              childWhenDragging: SizedBox(width: 63),
-                              feedback: SizedBox(
-                                height: 100,
+            Container(
+              height: 100.0,
+              color: Colors.green[400],
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: StreamBuilder<Hand>(
+                  stream: streamController.stream,
+                  initialData: null,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: snapshot.data.cardList
+                            .map((e) => Draggable(
+                                data: e['code'],
+                                childWhenDragging: SizedBox(width: 63),
+                                feedback: SizedBox(
+                                  height: 100,
+                                  child: Card(
+                                    child: FadeInImage.assetNetwork(
+                                        placeholder: 'assets/cardback.png',
+                                        image: e['image']),
+                                  ),
+                                ),
                                 child: Card(
                                   child: FadeInImage.assetNetwork(
                                       placeholder: 'assets/cardback.png',
                                       image: e['image']),
-                                ),
-                              ),
-                              child: Card(
-                                child: FadeInImage.assetNetwork(
-                                    placeholder: 'assets/cardback.png',
-                                    image: e['image']),
-                              )))
-                          .toList(),
-                    );
-                  } else if (snapshot.hasError) {
-                    return Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [Text(snapshot.error)]);
-                  } else {
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                },
+                                )))
+                            .toList(),
+                      );
+                    } else if (snapshot.hasError) {
+                      return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [Text(snapshot.error)]);
+                    } else {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                  },
+                ),
               ),
-            ),
-          )
-        ],
+            )
+          ],
+        ),
       ),
     );
   }
